@@ -8,7 +8,8 @@
     "scheme": "datapersistancetest",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.ryanling07.datapersistancetest"
     },
     "android": {
       "adaptiveIcon": {
@@ -37,6 +38,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "91918371-7409-4f8d-9eaa-0e8598fdbda1"
+      }
+    },
+    "owner": "ryanling07"
   }
 }

@@ -1,98 +1,94 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Link, Stack, router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from "react";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
+interface Class {
+  id: string;
+  name: string;
+  secondary: string;
+  number: string;
 }
 
-export default function HomeScreen() {
+export default function Index() {
+  const [classes, setClasses] = useState<Class[]>([]);
+
+  const retrieveAndGetData = useCallback(async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('Classes');
+      setClasses(jsonValue != null ? JSON.parse(jsonValue) : []);
+    } catch (e) {
+      console.log("error getting information", e);
+      setClasses([]);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      retrieveAndGetData();
+    }, [retrieveAndGetData])
+  );
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <View style={styles.container}>
+      <Stack.Screen options={{
+        headerShown: true,
+        title: 'Index',
+        headerRight: () => (
+          <Pressable style={{ shadowColor: 'white' }} onPress={() => router.push('/itemAdd')}>
+            <Text style={{ fontSize: 30 }}>+</Text>
+          </Pressable>),
+      }} />
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+      <FlatList
+        data={classes}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ListEmptyComponent={
+          <Text style={styles.empty}>No classes yet. Add one below.</Text>
+        }
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>{item.name}</Text>
+            <Text style={styles.cardBody}>{item.secondary}</Text>
+            <Text style={styles.cardBody}>{item.number}</Text>
+          </View>
+        )}
+      />
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+      <Link href="/itemAdd" style={{ marginTop: 20, color: 'blue' }}>
+        <Text>Add One</Text>
+      </Link>
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+      <Pressable onPress={() => { console.log(classes) }}>
+        <Text>DEV</Text>
+      </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+  container: { flex: 1 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  listContent: { padding: 16, flexGrow: 1 },
+  card: {
+    padding: 16,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#000000',
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+  cardTitle: { fontSize: 22, fontWeight: '600' },
+  cardBody: { fontSize: 16, marginTop: 2 },
+  separator: { height: 12 },
+  empty: { fontSize: 18, textAlign: 'center', marginTop: 40 },
+  button: {
+    alignSelf: 'center',
+    backgroundColor: 'purple',
+    borderRadius: 10,
+    paddingVertical: 14,
+    marginBottom: 24,
+    width: '80%',
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
+  buttonText: { fontSize: 25, color: 'white', alignSelf: 'center' },
 });
